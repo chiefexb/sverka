@@ -35,30 +35,39 @@ def main():
  dbs={}
  dbm=[]
  #выбираем годы
- for ch  in xmlroot.getchildren():
-  print ch.tag
-  dbs={}
+ if len(sys.argv)<=1:
+  print ("getfromint: нехватает параметров\nИспользование: sverka.py sverka 2007,2008")
+  sys.exit(2)
+ print sys.argv[2],sys.argv[3]
+ dbm=[]
+ for d  in xmlroot.getchildren():
+  print d.tag
+  #dbs={}
   #dbmass={}
   #выбираем базы за год
-  dbs['year']=ch.tag
-  for chh in ch.getchildren():
-   #dbmass={} 
+  #dbs['year']=d.tag
+  print len(d.getchildren())
+  for a in d.getchildren():
+   print a.tag
    #перебор атрибутов
-   for ch2 in chh.attrib.keys():
-    print ch2
-    dbs[ch2]=chh.attrib[ch2]
+   dbs={}
+   dbs['year']=d.tag
+   dbs['alias']=a.tag
+   for itms in a.attrib.items():
+    dbs[itms[0]]=itms[1]
    dbm.append(dbs)
-  #dbm[ch.tag]=dbmass
  print dbm,len(dbm)
  print 'TEST CONN'
+ i=0
  for pp in dbm:
-  print pp['year']
+  i+=1
+  print i,pp['year'],pp['alias'],pp['db']
   try:
    con = fdb.connect (host=pp['host'], database=pp['db'], user='SYSDBA', password=pp['password'],charset='WIN1251')
+   con.close()
    print  pp['host'],pp['db'],'OK' 
   except  Exception, e:
    print pp['host'],pp['db'],pp['password'],'FAIL',e
- #main_dbname=main_database.find('dbname').text
 if __name__ == "__main__":
     main()
 
