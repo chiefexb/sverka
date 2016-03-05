@@ -1,0 +1,11 @@
+<filter>
+ <name>Возврат ИД, ФНС</name>
+ <grids>
+  <header>
+   <text>Отказаные ФНС </text> 
+   <sql text='Подразделение'></sql>
+  </header>
+  <body>
+  </body>
+ <grids>
+</filter>
