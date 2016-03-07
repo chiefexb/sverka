@@ -18,12 +18,37 @@ class Profiler(object):
         st=u"Время выполнения:"+str(time.time() - self._startTime) # {:.3f} sec$
         print st
         logging.info(st)
+def preprocess (sql):
+ s=sql.replace('%not_equal','<>')
+ return s
 def quoted(a):
  try:
   st=u"'"+a+u"'"
  except:
   st='Null'
  return st
+def crowl(dbm,sql):
+ rez=[]
+ i=0
+ for pp in dbm:
+  i+=1
+  print i,pp['year'],pp['alias'],pp['db'],len (dbm)
+  try:
+   con = fdb.connect (host=pp['host'], database=pp['db'], user='SYSDBA', password=pp['password'],charset='WIN1251')
+  except  Exception, e:
+   print pp['host'],pp['db'],pp['password'],'FAIL',e
+  else:
+   cur=con.cursor()
+   print sql
+   if sql=='test':
+    print  i,pp['host'],pp['db'],'OK'
+   else:
+    cur.execute (sql)
+    r=cur.fetchall()
+    #print  i,pp['host'],pp['db'],'OK'
+    rez.append(r)
+   con.close()
+ return rez
 def main():
  logging.basicConfig(format = u'%(levelname)-8s [%(asctime)s] %(message)s',level = logging.DEBUG, filename = './logging.log')
  fileconfig=file('./sverka.xml')
@@ -40,6 +65,11 @@ def main():
   print "sverka.py sverka all по всем годам"
   sys.exit(2)
  print sys.argv[2],sys.argv[3]
+ try:
+  filefilter=file(sys.argv[3])
+ except:
+  sys.exit(2)
+  print 'файл фильтра не найден'
  dbm=[]
  if sys.argv[2]=='all':
   years=['d2007','d2008','d2009','d2010','d2011']
@@ -63,20 +93,50 @@ def main():
     dbm.append(dbs)
  print dbm,len(dbm)
  print 'TEST CONN'
- i=0
- for pp in dbm:
-  i+=1
-  print i,pp['year'],pp['alias'],pp['db']
-  try:
-   con = fdb.connect (host=pp['host'], database=pp['db'], user='SYSDBA', password=pp['password'],charset='WIN1251')
-   cur=con.cursor()
-   cur.execute ('select count(pk) from id')
-   r=cur.fetchone()
-   print r
-   con.close()
-   print  pp['host'],pp['db'],'OK' 
-  except  Exception, e:
-   print pp['host'],pp['db'],pp['password'],'FAIL',e
+ crowl(dbm,'test')
+ fltxml=etree.parse(filefilter)
+ fltroot=fltxml.getroot()
+ print fltroot.tag
+ grids=fltroot.find('grids')
+ header=grids.find('header')
+ d=datetime.now().strftime('%d.%m.%y')
+ df=datetime.now().strftime('%Y_%m_%d')
+ fn2='f'+'_'+df+'.ods'
+ textdoc=initdoc()
+ table,tablecontents,textdoc=inittable(textdoc)
+ body=grids.find('body')
+ hr=[]
+ for ch in header:
+  if ch.tag=='text':
+   print ch.text 
+   hr.append(=('1',ch.text)
+   table=addrow(row,table,tablecontents)
+  elif ch.tag=='sql':
+   sql=ch.text
+   if 'text' in ch.attrib.keys():
+    text=ch.attrib['text']
+   else:
+    text=''
+   r=crowl(dbm,sql)
+   #print len(r)
+   
+ for ch in body:
+  if ch.tag=='sql':
+   sql=preprocess(ch.text)
+   r=crowl(dbm,sql)
+   for rr in r:
+    print len(rr)
+ #for rr in r:
+ #   #print len(rr)
+ #   rw=[text]
+ #   rw.extend(rr[0])
+ #   for rww in rw:
+ #    print rww
+ #   row=tuple(rw)
+ #   #print row
+ 
+#    table=addrow(row,table,tablecontents)
+#  savetable(table,textdoc,'/home/all'+'/'+fn2)
 if __name__ == "__main__":
     main()
 
